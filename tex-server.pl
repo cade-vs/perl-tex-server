@@ -6,13 +6,11 @@
 #
 ##############################################################################
 use strict;
-#use POSIX ":sys_wait_h";
+use POSIX ":sys_wait_h";
 use Socket;
 use IO::Socket;
 use IO::Socket::INET;
 use Data::Tools;
-#use FileHandle;
-use Storable qw( nfreeze thaw );
 use Sockets;
 
 my $break_main_loop = 0;
@@ -80,15 +78,19 @@ while(4)
   $SIG{ 'INT'  } = sub { $break_main_loop = 1; };
   $SIG{ 'CHLD' } = 'DEFAULT';
 
-  $PEER_HOST = $CLIENT->peerhost();
-  $PEER_PORT = $CLIENT->peerport();
-
-  print( "status: client connected from [$PEER_HOST:$PEER_PORT]\n" );
+  print( "status: client connected from [$peerhost:$peerport]\n" );
   $CLIENT->autoflush(1);
-  process_tex_request( $CLIENT );
+  eval
+    {
+    process_tex_request( $CLIENT );
+    };
+  if( $@ )  
+    {
+    print "error: process tex failed: $@\n";
+    }
   $CLIENT->close();
   
-  print( "status: client disconnected from [$PEER_HOST:$PEER_PORT]\n" );
+  print( "status: client disconnected from [$peerhost:$peerport]\n" );
   exit();
   }
 close( $SERVER );
@@ -119,14 +121,20 @@ sub process_tex_request
   my $pdf_file = "tmp.$$.pdf";
 
   file_save( $tex_file, $tex_data );
-  system( "pdflatex -interaction=nonstopmode -jobname=tmp.$$ $tex_file" );
+  my $cmd = "pdflatex -interaction=nonstopmode -jobname=tmp.$$ $tex_file";
+  print "executing: [$cmd]\n";
+  system( $cmd );
   # TODO: check result
 
   my $data_out = {};
   
   $data_out->{ 'PDF_DATA' } = file_load( $pdf_file );
   
-  # TODO: unlink tex/pdf files
+  unlink( "tmp.$$.aux" );
+  unlink( "tmp.$$.log" );
+  unlink( "tmp.$$.tex" );
+  unlink( "tmp.$$.pdf" );
+  
   socket_write_message( $CLIENT, $data_out );
 }
 

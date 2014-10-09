@@ -8,6 +8,7 @@
 use strict;
 use Sockets;
 use IO::Socket::INET;
+use Data::Tools;
 
 my $tex_file = shift;
 my $pdf_file = shift;

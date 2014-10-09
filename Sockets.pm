@@ -8,6 +8,7 @@ package Sockets;
 use Exporter;
 use strict;
 use IO::Select;
+use Storable qw( nfreeze thaw );
 use Time::HiRes qw( sleep time );
 
 our @ISA    = qw( Exporter );
@@ -131,9 +132,9 @@ sub socket_write_message
   my $data = shift;
   
   my $freezed_data = nfreeze( $data );
-  $data_len = length( $freezed_data );
+  my $data_len = length( $freezed_data );
   
-  $data_len_hex = sprintf( "%08X", $data_len );
+  my $data_len_hex = sprintf( "%08X", $data_len );
   # TODO: check len
 
   socket_write( $sock, $data_len_hex . $freezed_data, $data_len + 8 );
