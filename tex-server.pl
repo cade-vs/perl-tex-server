@@ -116,14 +116,15 @@ sub process_tex_request
   my $tex_data = $data->{ 'TEX_DATA' };
   
   my $tex_file = "tmp.$$.tex";
+  my $pdf_file = "tmp.$$.pdf";
 
   file_save( $tex_file, $tex_data );
-  system( "pdflatex -interaction=nonstopmode $tex_file" );
+  system( "pdflatex -interaction=nonstopmode -jobname=tmp.$$ $tex_file" );
   # TODO: check result
 
   my $data_out = {};
   
-  $data_out->{ 'PDF_DATA' } = file_load( "$tex_file.pdf" );
+  $data_out->{ 'PDF_DATA' } = file_load( $pdf_file );
   
   # TODO: unlink tex/pdf files
   socket_write_message( $CLIENT, $data_out );
